@@ -39,4 +39,8 @@ impl ForeverDB {
 
         Ok(Some(self.data_log.read(e.data_offset, e.data_len)?))
     }
+
+    pub fn exists(&self, key: &[u8]) -> Result<bool> {
+        Ok(self.db_index.get(key)?.is_some())
+    }
 }
