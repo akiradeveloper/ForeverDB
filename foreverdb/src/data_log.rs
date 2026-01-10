@@ -55,14 +55,12 @@ impl DataLog {
 
         let magic = u32::from_le_bytes(buf[0..4].try_into().unwrap());
         if magic != MAGIC {
-            dbg!("magic mismatch");
             return Err(Error::LogReadFailed);
         }
 
         let crc_stored = u32::from_le_bytes(buf[4..8].try_into().unwrap());
         let crc_calculated = crc32fast::hash(&buf[8..]);
         if crc_stored != crc_calculated {
-            dbg!("crc mismatch");
             return Err(Error::LogReadFailed);
         }
 
@@ -87,8 +85,8 @@ mod tests {
         let mut log = DataLog::open(f.path()).unwrap();
 
         let data1 = vec![1; 10];
-        let k1 = log.append(data1).unwrap();
-        let data2 = vec![2; 20];
+        let _ = log.append(data1).unwrap();
+        let data2 = vec![2; 100000];
         let k2 = log.append(data2.clone()).unwrap();
 
         let read_data = log.read(k2).unwrap();

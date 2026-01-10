@@ -43,8 +43,9 @@ impl ForeverDB {
         Ok(self.db_index.get(key)?.is_some())
     }
 
-    pub fn sync(&mut self) {
-        self.data_log.sync();
+    pub fn sync(&mut self) -> Result<()> {
+        self.data_log.sync()?;
         self.db_index.sync();
+        Ok(())
     }
 }
