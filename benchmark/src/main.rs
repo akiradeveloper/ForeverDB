@@ -3,26 +3,36 @@ use clap::Parser;
 use rand::Rng;
 use std::collections::HashSet;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 struct CommandArgs {
     #[arg(long, default_value_t = 1024)]
     datasize: u32,
     #[arg(long)]
     warmup: u64,
+    #[arg(long, default_value_t = false)]
+    mem: bool,
 }
 
 fn main() {
     let args = CommandArgs::parse();
+    dbg!(&args);
 
-    let data_log = {
-        let file = tempfile::NamedTempFile::new().unwrap();
-        DataLog::open(file.path()).unwrap()
+    let f1 = tempfile::NamedTempFile::new().unwrap();
+    let f2 = tempfile::NamedTempFile::new().unwrap();
+    let (data_log_path, db_index_path) = if args.mem {
+        (f1.path(), f2.path())
+    } else {
+        let p1 = std::path::Path::new("data.db");
+        let p2 = std::path::Path::new("index.db");
+
+        std::fs::remove_file(p1).ok();
+        std::fs::remove_file(p2).ok();
+
+        (p1, p2)
     };
 
-    let db_index = {
-        let file = tempfile::NamedTempFile::new().unwrap();
-        DBIndex::open(file.path()).unwrap()
-    };
+    let data_log = DataLog::open(data_log_path).unwrap();
+    let db_index = DBIndex::open(db_index_path).unwrap();
 
     let mut db = ForeverDB::new(data_log, db_index);
 
@@ -35,8 +45,9 @@ fn main() {
         keys.insert(key);
     }
 
-    let mut sum_time = std::time::Duration::ZERO;
-    let mut cnt = 0;
+    eprintln!("Warmup done. Starting benchmark...");
+
+    let mut results = vec![];
 
     let t = std::time::Instant::now();
     while t.elapsed() < std::time::Duration::from_secs(10) {
@@ -45,12 +56,17 @@ fn main() {
             let _ = db.get(k).unwrap();
         }
         let elapsed = timer.elapsed();
-        sum_time += elapsed;
-        cnt += 1;
+        let latency = elapsed / (keys.len() as u32);
+        results.push(latency);
     }
 
-    let latency = sum_time / cnt;
-    eprintln!("Latency: {:?}", latency);
+    let mut sum = std::time::Duration::ZERO;
+    let n = results.len();
+    for r in results {
+        sum += r;
+    }
+
+    eprintln!("Latency: {:?}", sum / n as u32);
 }
 
 fn random(size: usize) -> Vec<u8> {
