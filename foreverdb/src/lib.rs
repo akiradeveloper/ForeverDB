@@ -3,9 +3,10 @@ use error::{Error, Result};
 use std::path::Path;
 
 mod data_log;
-use data_log::DataLog;
+pub use data_log::DataLog;
 mod db_index;
-use db_index::{DBIndex, IndexEntry};
+pub use db_index::DBIndex;
+use db_index::IndexEntry;
 
 pub struct ForeverDB {
     data_log: DataLog,
