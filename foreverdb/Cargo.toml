@@ -4,12 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1"
-crc32fast = "1.5.0"
-gdbm = "0.2.0"
-libc = "0.2.180"
-rkyv = "0.8.13"
-thiserror = "2.0.17"
+crc32fast = "1.5"
+gdbm = "0.2"
+libc = "0.2"
+rkyv = "0.8"
+thiserror = "2"
 
 [dev-dependencies]
 tempfile = "3.24.0"
