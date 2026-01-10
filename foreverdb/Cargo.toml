@@ -1,0 +1,14 @@
+[package]
+name = "foreverdb"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crc32fast = "1.5"
+gdbm = "0.2"
+libc = "0.2"
+rkyv = "0.8"
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3.24.0"
