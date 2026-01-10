@@ -17,9 +17,8 @@ impl ForeverDB {
         Self { data_log, db_index }
     }
 
-    pub fn insert(&mut self, key: &[u8], data: &[u8]) -> Result<()> {
-        let data_offset = self.data_log.append(data)?;
-        let data_len = data.len() as u32;
+    pub fn insert(&mut self, key: &[u8], data: Vec<u8>) -> Result<()> {
+        let (data_offset, data_len) = self.data_log.append(data)?;
 
         self.db_index.insert(
             key,
@@ -37,10 +36,15 @@ impl ForeverDB {
             return Ok(None);
         };
 
-        Ok(Some(self.data_log.read(e.data_offset, e.data_len)?))
+        Ok(Some(self.data_log.read((e.data_offset, e.data_len))?))
     }
 
     pub fn exists(&self, key: &[u8]) -> Result<bool> {
         Ok(self.db_index.get(key)?.is_some())
+    }
+
+    pub fn sync(&mut self) {
+        self.data_log.sync();
+        self.db_index.sync();
     }
 }

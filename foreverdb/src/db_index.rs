@@ -12,22 +12,26 @@ pub struct DBIndex {
 
 impl DBIndex {
     pub fn open(path: &Path) -> Result<Self> {
-        let db =
-            gdbm::Gdbm::new(path, 0, gdbm::Open::WRCREAT, libc::S_IRUSR | libc::S_IWUSR).unwrap();
+        let db = gdbm::Gdbm::new(path, 0, gdbm::Open::WRCREAT, libc::S_IRUSR | libc::S_IWUSR)
+            .map_err(Error::Gdbm)?;
 
         Ok(Self { db })
     }
 
-    pub (super) fn insert(&mut self, k: &[u8], e: IndexEntry) -> Result<()> {
+    pub(super) fn insert(&mut self, k: &[u8], e: IndexEntry) -> Result<()> {
         let v = rkyv::to_bytes::<rkyv::rancor::Error>(&e).unwrap();
-        self.db.store(k, &v, false).unwrap();
+        self.db.store(k, &v, false).map_err(Error::Gdbm)?;
         Ok(())
     }
 
-    pub (super) fn get(&self, k: &[u8]) -> Result<Option<IndexEntry>> {
-        let data = self.db.fetch_data(k).unwrap();
+    pub(super) fn get(&self, k: &[u8]) -> Result<Option<IndexEntry>> {
+        let data = self.db.fetch_data(k).map_err(Error::Gdbm)?;
         let v = rkyv::from_bytes::<IndexEntry, rkyv::rancor::Error>(&data).unwrap();
         Ok(Some(v))
+    }
+
+    pub(super) fn sync(&mut self) {
+        self.db.sync();
     }
 }
 
@@ -40,7 +44,7 @@ mod tests {
         let f = tempfile::NamedTempFile::new().unwrap();
         let mut db = DBIndex::open(f.path()).unwrap();
 
-        let key = vec![1;32];
+        let key = vec![1; 32];
         let val = IndexEntry {
             data_offset: 42,
             data_len: 100,

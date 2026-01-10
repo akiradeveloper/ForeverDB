@@ -12,6 +12,10 @@ pub enum Error {
     IndexInsertFailed,
     #[error("Failed to get from index")]
     IndexGetFailed,
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
+    #[error(transparent)]
+    Gdbm(#[from] gdbm::GdbmError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
