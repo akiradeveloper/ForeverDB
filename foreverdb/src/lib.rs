@@ -9,6 +9,8 @@ mod db_index;
 pub use db_index::DBIndex;
 use db_index::IndexEntry;
 
+mod linhash;
+
 pub struct ForeverDB {
     data_log: DataLog,
     db_index: DBIndex,

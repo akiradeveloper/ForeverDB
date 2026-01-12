@@ -1,3 +1,5 @@
+use super::*;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Log magic mismatch")]
@@ -7,7 +9,7 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] std::io::Error),
     #[error(transparent)]
-    ForeverHash(#[from] foreverhash::Error),
+    HashTable(#[from] linhash::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
