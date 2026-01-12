@@ -86,15 +86,6 @@ impl ForeverHash {
 
         let main_pages = Device::new(main_page_file);
 
-        match main_pages.read_page(0)? {
-            Some(_) => {}
-            None => {
-                // Since the pages are not initialized, insert two empty pages.
-                main_pages.write_page(0, Page::new())?;
-                main_pages.write_page(1, Page::new())?;
-            }
-        }
-
         let overflow_page_file = File::options()
             .read(true)
             .write(true)
@@ -114,6 +105,20 @@ impl ForeverHash {
             max_kv_per_page: None,
             n_items: 0,
         })
+    }
+
+    pub fn open(main_page_file: &Path, overflow_page_file: &Path) -> Result<Self> {
+        let mut db = Self::new(main_page_file, overflow_page_file)?;
+
+        let n_main_pages = op::Restore { db: &mut db }.exec()?;
+
+        // Invariant: there are at least two valid main pages.
+        if n_main_pages < 2 {
+            op::Init { db: &mut db }.exec()?;
+            op::Restore { db: &mut db }.exec()?;
+        }
+
+        Ok(db)
     }
 
     // The key must be at least 64 bits.

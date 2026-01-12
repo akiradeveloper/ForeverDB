@@ -8,3 +8,9 @@ pub use get::Get;
 
 mod insert;
 pub use insert::Insert;
+
+mod restore;
+pub use restore::Restore;
+
+mod init;
+pub use init::Init;

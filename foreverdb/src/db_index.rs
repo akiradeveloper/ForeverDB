@@ -12,7 +12,7 @@ pub struct DBIndex {
 
 impl DBIndex {
     pub fn open(main: &Path, overflow: &Path) -> Result<Self> {
-        let db = foreverhash::ForeverHash::new(main, overflow)?;
+        let db = foreverhash::ForeverHash::open(main, overflow)?;
 
         Ok(Self { db })
     }
