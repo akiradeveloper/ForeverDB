@@ -76,7 +76,7 @@ impl Split<'_> {
         }
 
         for (k, v) in kv_pairs {
-            let hash = self.db.hash(&k);
+            let hash = self.db.hash_key(&k);
             let b = hash & ((1 << (cur_level + 1)) - 1);
             let tail = page_chains.get_mut(&b).unwrap().back_mut().unwrap();
 
