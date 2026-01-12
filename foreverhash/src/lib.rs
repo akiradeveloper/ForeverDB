@@ -13,29 +13,13 @@ mod device;
 use device::Device;
 mod op;
 
-mod page_ref;
-use page_ref::PageRef;
-
-enum PageId {
-    Main(u64),
-    Overflow(u64),
-}
+mod page;
+use page::*;
 
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Debug)]
 pub struct Page {
     pub kv_pairs: HashMap<Vec<u8>, Vec<u8>>,
     pub overflow_id: Option<u64>,
-}
-
-fn encode_page(page: &Page) -> Vec<u8> {
-    rkyv::to_bytes::<rkyv::rancor::Error>(page)
-        .unwrap()
-        .to_vec()
-}
-
-fn decode_page(buf: &[u8]) -> Result<Page> {
-    let page = rkyv::from_bytes::<Page, rkyv::rancor::Error>(buf)?;
-    Ok(page)
 }
 
 fn calc_max_kv_per_page(ksize: usize, vsize: usize) -> u8 {
@@ -56,6 +40,11 @@ fn calc_max_kv_per_page(ksize: usize, vsize: usize) -> u8 {
     }
 
     255
+}
+
+enum PageId {
+    Main(u64),
+    Overflow(u64),
 }
 
 pub struct ForeverHash {

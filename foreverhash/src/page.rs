@@ -2,6 +2,17 @@ use super::*;
 
 type ArchivedPage = <Page as rkyv::Archive>::Archived;
 
+pub fn encode_page(page: &Page) -> Vec<u8> {
+    rkyv::to_bytes::<rkyv::rancor::Error>(page)
+        .unwrap()
+        .to_vec()
+}
+
+pub fn decode_page(buf: &[u8]) -> Result<Page> {
+    let page = rkyv::from_bytes::<Page, rkyv::rancor::Error>(buf)?;
+    Ok(page)
+}
+
 pub struct PageRef {
     pub buf: AlignedVec,
     pub data_range: Range<usize>,
