@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 crc32fast.workspace = true
 rkyv.workspace = true
-sha2 = "0.10"
 thiserror.workspace = true
 
 [dev-dependencies]

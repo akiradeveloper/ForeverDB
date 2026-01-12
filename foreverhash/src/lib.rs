@@ -119,14 +119,10 @@ impl ForeverHash {
         })
     }
 
+    // The key must be at least 64 bits.
     fn hash(&self, key: &[u8]) -> u64 {
-        use sha2::Digest;
-
-        sha2::Sha512::digest(key)
-            .as_slice()
-            .get(..8)
-            .map(|b| u64::from_le_bytes(b.try_into().unwrap()))
-            .unwrap()
+        let a: [u8; 8] = key[0..8].try_into().ok().unwrap();
+        u64::from_le_bytes(a)
     }
 
     fn calc_main_page_id(&self, key: &[u8]) -> u64 {
