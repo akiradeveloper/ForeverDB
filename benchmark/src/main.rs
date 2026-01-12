@@ -43,7 +43,7 @@ fn main() {
     let mut keys = HashSet::new();
 
     for _ in 0..args.warmup {
-        let key = random(64); // 256 bits key
+        let key = random(32); // 256 bits key
         let data = random(args.datasize as usize);
         db.insert(key.clone(), data).unwrap();
         keys.insert(key);
