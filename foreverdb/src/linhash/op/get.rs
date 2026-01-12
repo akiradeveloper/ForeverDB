@@ -7,16 +7,16 @@ pub struct Get<'a> {
 impl Get<'_> {
     pub fn exec(self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         let b = self.db.calc_main_page_id(key);
-        let mut page = self.db.main_pages.read_page(b)?.unwrap();
+        let mut page = self.db.main_pages.read_page_ref(b)?.unwrap();
 
         loop {
-            if let Some(v) = page.kv_pairs.get(key) {
-                return Ok(Some(v.clone()));
+            if let Some(v) = page.get_value(key) {
+                return Ok(Some(v.to_owned()));
             }
 
-            match page.overflow_id {
+            match page.overflow_id() {
                 Some(id) => {
-                    page = self.db.overflow_pages.read_page(id)?.unwrap();
+                    page = self.db.overflow_pages.read_page_ref(id)?.unwrap();
                 }
                 None => {
                     return Ok(None);
