@@ -7,11 +7,11 @@ edition = "2024"
 crc32fast.workspace = true
 rkyv.workspace = true
 thiserror.workspace = true
-xxhash-rust = { version = "0.8.15", features = ["xxh3"], optional = true }
+xxhash-rust = { version = "0.8.15", features = ["xxh3", "xxh32"] }
 
 [dev-dependencies]
 tempfile.workspace = true
 
 [features]
 default = ["versatile"]
-versatile = ["xxhash-rust"]
+versatile = []

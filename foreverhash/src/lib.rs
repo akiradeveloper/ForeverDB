@@ -18,18 +18,40 @@ use page::*;
 
 #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Debug)]
 pub struct Page {
-    pub kv_pairs: HashMap<Vec<u8>, Vec<u8>>,
+    pub hashes: Vec<u32>, 
+    pub kv_pairs: Vec<(Vec<u8>, Vec<u8>)>,
     pub overflow_id: Option<u64>,
+}
+
+impl Page {
+    pub fn push(&mut self, key: Vec<u8>, value: Vec<u8>) {
+        self.hashes.push(xxhash_rust::xxh32::xxh32(&key, 0));
+        self.kv_pairs.push((key, value));
+    }
+
+    pub fn exists(&self, key: &[u8]) -> bool {
+        let h2 = xxhash_rust::xxh32::xxh32(key, 0);
+        for (i, h1) in self.hashes.iter().enumerate() {
+            if *h1 == h2 {
+                if self.kv_pairs[i].0.as_slice() == key {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
 }
 
 fn calc_max_kv_per_page(ksize: usize, vsize: usize) -> u8 {
     for i in 0..=255 {
         let mut page = Page {
-            kv_pairs: HashMap::new(),
+            hashes: Vec::new(),
+            kv_pairs: Vec::new(),
             overflow_id: Some(1),
         };
         for j in 0..i {
-            page.kv_pairs.insert(vec![j; ksize], vec![j; vsize]);
+            page.push(vec![j; ksize], vec![j; vsize]);
         }
 
         let buf = encode_page(&page);
@@ -76,14 +98,16 @@ impl ForeverHash {
                 main_pages.write_page(
                     0,
                     Page {
-                        kv_pairs: HashMap::new(),
+                        hashes: Vec::new(),
+                        kv_pairs: Vec::new(),
                         overflow_id: None,
                     },
                 )?;
                 main_pages.write_page(
                     1,
                     Page {
-                        kv_pairs: HashMap::new(),
+                        hashes: Vec::new(),
+                        kv_pairs: Vec::new(),
                         overflow_id: None,
                     },
                 )?;

@@ -43,7 +43,7 @@ impl Split<'_> {
 
         let mut cur_page = self.db.main_pages.read_page(split_id)?.unwrap();
         loop {
-            for (k, v) in cur_page.kv_pairs.drain() {
+            for (k, v) in cur_page.kv_pairs {
                 out.push((k, v));
             }
 
@@ -75,7 +75,8 @@ impl Split<'_> {
             page_chain.push_back((
                 PageId::Main(main_page_id),
                 Page {
-                    kv_pairs: HashMap::new(),
+                    hashes: Vec::new(),
+                    kv_pairs: Vec::new(),
                     overflow_id: None,
                 },
             ));
@@ -87,7 +88,7 @@ impl Split<'_> {
             let tail = page_chains.get_mut(&b).unwrap().back_mut().unwrap();
 
             if tail.1.kv_pairs.len() < self.db.max_kv_per_page.unwrap() as usize {
-                tail.1.kv_pairs.insert(k, v);
+                tail.1.push(k, v);
                 continue;
             } else {
                 let new_overflow_id = self.db.next_overflow_id;
@@ -95,10 +96,11 @@ impl Split<'_> {
                 tail.1.overflow_id = Some(new_overflow_id);
 
                 let mut new_page = Page {
-                    kv_pairs: HashMap::new(),
+                    hashes: Vec::new(),
+                    kv_pairs: Vec::new(),
                     overflow_id: None,
                 };
-                new_page.kv_pairs.insert(k, v);
+                new_page.push(k, v);
 
                 page_chains
                     .get_mut(&b)

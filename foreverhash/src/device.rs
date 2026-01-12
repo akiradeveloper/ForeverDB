@@ -103,11 +103,12 @@ mod tests {
         let device = Device::new(f.reopen().unwrap());
 
         let mut page = Page {
-            kv_pairs: HashMap::new(),
+            hashes: Vec::new(),
+            kv_pairs: Vec::new(),
             overflow_id: None,
         };
-        page.kv_pairs.insert(vec![1; 32], vec![1; 16]);
-        page.kv_pairs.insert(vec![2; 32], vec![2; 16]);
+        page.push(vec![1; 32], vec![1; 16]);
+        page.push(vec![2; 32], vec![2; 16]);
 
         device.write_page(3, page).unwrap();
 

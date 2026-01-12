@@ -31,8 +31,18 @@ impl PageRef {
 
     pub fn get_value(&self, key: &[u8]) -> Option<&[u8]> {
         let page = self.archived();
-        page.kv_pairs
-            .get(key).map(|v| v.as_slice())
+
+        let h2 = xxhash_rust::xxh32::xxh32(key, 0);
+        for (i, h1) in page.hashes.iter().enumerate() {
+            if h1.to_native() == h2 {
+                let kv = &page.kv_pairs[i];
+                if kv.0.as_slice() == key {
+                    return Some(kv.1.as_slice());
+                }
+            }
+        }
+
+        None
     }
 
     pub fn overflow_id(&self) -> Option<u64> {
