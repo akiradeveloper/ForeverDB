@@ -138,7 +138,8 @@ impl LinHash {
 
     fn load_factor(&self) -> f64 {
         let n_main_pages = (1 << self.main_base_level) + self.next_split_main_page_id;
-        self.n_items as f64 / (n_main_pages as f64) * (self.max_kv_per_page.unwrap() as f64)
+        let max_items = n_main_pages * self.max_kv_per_page.unwrap() as u64;
+        self.n_items as f64 / max_items as f64
     }
 
     pub fn len(&self) -> u64 {
