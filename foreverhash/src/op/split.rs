@@ -72,13 +72,7 @@ impl Split<'_> {
         page_chains.insert(split_id, VecDeque::new());
         page_chains.insert(new_split_id, VecDeque::new());
         for (&main_page_id, page_chain) in &mut page_chains {
-            page_chain.push_back((
-                PageId::Main(main_page_id),
-                Page {
-                    kv_pairs: HashMap::new(),
-                    overflow_id: None,
-                },
-            ));
+            page_chain.push_back((PageId::Main(main_page_id), Page::new()));
         }
 
         for (k, v) in kv_pairs {
@@ -87,18 +81,15 @@ impl Split<'_> {
             let tail = page_chains.get_mut(&b).unwrap().back_mut().unwrap();
 
             if tail.1.kv_pairs.len() < self.db.max_kv_per_page.unwrap() as usize {
-                tail.1.kv_pairs.insert(k, v);
+                tail.1.push(k, v);
                 continue;
             } else {
                 let new_overflow_id = self.db.next_overflow_id;
                 self.db.next_overflow_id += 1;
                 tail.1.overflow_id = Some(new_overflow_id);
 
-                let mut new_page = Page {
-                    kv_pairs: HashMap::new(),
-                    overflow_id: None,
-                };
-                new_page.kv_pairs.insert(k, v);
+                let mut new_page = Page::new();
+                new_page.push(k, v);
 
                 page_chains
                     .get_mut(&b)

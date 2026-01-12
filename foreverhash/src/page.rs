@@ -31,8 +31,7 @@ impl PageRef {
 
     pub fn get_value(&self, key: &[u8]) -> Option<&[u8]> {
         let page = self.archived();
-        page.kv_pairs
-            .get(key).map(|v| v.as_slice())
+        page.kv_pairs.get(key).map(|v| v.as_slice())
     }
 
     pub fn overflow_id(&self) -> Option<u64> {

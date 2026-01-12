@@ -27,13 +27,13 @@ impl Insert<'_> {
             }
         }
 
-        if tail_page.1.kv_pairs.contains_key(&key) {
+        if tail_page.1.contains(&key) {
             return Err(Error::KeyAlreadyExists);
         }
 
         if tail_page.1.kv_pairs.len() < self.db.max_kv_per_page.unwrap() as usize {
             // If there is space in the tail-page, insert directly.
-            tail_page.1.kv_pairs.insert(key, value);
+            tail_page.1.push(key, value);
             match tail_page.0 {
                 PageId::Main(b) => self.db.main_pages.write_page(b, tail_page.1)?,
                 PageId::Overflow(id) => self.db.overflow_pages.write_page(id, tail_page.1)?,
@@ -42,11 +42,8 @@ impl Insert<'_> {
             // If not, allocate a new overflow page.
             let new_overflow_id = self.db.next_overflow_id;
             self.db.next_overflow_id += 1;
-            let mut new_page = Page {
-                kv_pairs: HashMap::new(),
-                overflow_id: None,
-            };
-            new_page.kv_pairs.insert(key, value);
+            let mut new_page = Page::new();
+            new_page.push(key, value);
             self.db
                 .overflow_pages
                 .write_page(new_overflow_id, new_page)?;
