@@ -1,10 +1,39 @@
 use super::*;
 
+struct IO {
+    f: File,
+}
+
+impl IO {
+    pub fn new(f: File) -> Self {
+        Self { f }
+    }
+
+    pub fn read(&self, buf: &mut [u8], offset: u64) -> Result<()> {
+        self.f.read_at(buf, offset)?;
+        Ok(())
+    }
+
+    pub fn write(&self, buf: &[u8], offset: u64) -> Result<()> {
+        self.f.write_at(buf, offset)?;
+        Ok(())
+    }
+
+    pub fn flush(&self) -> Result<()> {
+        self.f.sync_all()?;
+        Ok(())
+    }
+}
+
 pub struct Device {
-    pub f: File,
+    io: IO,
 }
 
 impl Device {
+    pub fn new(f: File) -> Self {
+        Self { io: IO::new(f) }
+    }
+
     pub fn write_page(&self, id: u64, page: Page) -> Result<()> {
         let data = encode_page(&page);
         assert!(data.len() <= 4088);
@@ -20,19 +49,21 @@ impl Device {
             out
         };
 
-        self.f.write_at(&buf, id * 4096)?;
+        self.io.write(&buf, id * 4096)?;
 
         Ok(())
     }
 
     pub fn read_page(&self, id: u64) -> Result<Option<Page>> {
         let mut buf = vec![0u8; 4096];
-        self.f.read_at(&mut buf, id * 4096)?;
+        self.io.read(&mut buf, id * 4096)?;
+
         let stored_crc = u32::from_le_bytes(buf[0..4].try_into().unwrap());
         let data_len = u32::from_le_bytes(buf[4..8].try_into().unwrap()) as usize;
         let data = &buf[8..(8 + data_len)];
         let calc_crc = crc32fast::hash(data);
         assert_eq!(stored_crc, calc_crc);
+
         match decode_page(data) {
             Ok(page) => Ok(Some(page)),
             Err(_) => Ok(None),
@@ -43,7 +74,7 @@ impl Device {
         let mut buf = AlignedVec::with_capacity(4096);
         buf.resize(4096, 0);
 
-        self.f.read_at(&mut buf, id * 4096)?;
+        self.io.read(&mut buf, id * 4096)?;
 
         let stored_crc = u32::from_le_bytes(buf[0..4].try_into().unwrap());
         let data_len = u32::from_le_bytes(buf[4..8].try_into().unwrap()) as usize;
@@ -57,7 +88,7 @@ impl Device {
     }
 
     pub fn sync(&self) -> Result<()> {
-        self.f.sync_all()?;
+        self.io.flush()?;
         Ok(())
     }
 }
@@ -69,9 +100,7 @@ mod tests {
     #[test]
     fn test_read_page_ref() {
         let f = tempfile::NamedTempFile::new().unwrap();
-        let device = Device {
-            f: f.reopen().unwrap(),
-        };
+        let device = Device::new(f.reopen().unwrap());
 
         let mut page = Page {
             kv_pairs: HashMap::new(),

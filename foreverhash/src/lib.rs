@@ -67,7 +67,7 @@ impl ForeverHash {
             .create(true)
             .open(main_page_file)?;
 
-        let main_pages = Device { f: main_page_file };
+        let main_pages = Device::new(main_page_file);
 
         match main_pages.read_page(0)? {
             Some(_) => {}
@@ -96,9 +96,7 @@ impl ForeverHash {
             .create(true)
             .open(overflow_page_file)?;
 
-        let overflow_pages = Device {
-            f: overflow_page_file,
-        };
+        let overflow_pages = Device::new(overflow_page_file);
 
         Ok(Self {
             main_pages,
