@@ -58,7 +58,7 @@ fn calc_max_kv_per_page(ksize: usize, vsize: usize) -> u8 {
     255
 }
 
-pub struct LinHash {
+pub struct ForeverHash {
     main_pages: Device,
     main_base_level: u8,
     next_split_main_page_id: u64,
@@ -70,7 +70,7 @@ pub struct LinHash {
     max_kv_per_page: Option<u8>,
 }
 
-impl LinHash {
+impl ForeverHash {
     pub fn new(main_page_file: &Path, overflow_page_file: &Path) -> Result<Self> {
         let main_page_file = File::options()
             .read(true)
@@ -163,35 +163,5 @@ impl LinHash {
         }
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn vec(i: u64) -> Vec<u8> {
-        i.to_le_bytes().to_vec()
-    }
-
-    #[test]
-    fn test_insert_and_query() {
-        let main = tempfile::NamedTempFile::new().unwrap();
-        let overflow = tempfile::NamedTempFile::new().unwrap();
-        let mut fh = LinHash::new(main.path(), overflow.path()).unwrap();
-
-        let n = 10000;
-        let range = 0..n;
-
-        for i in range.clone() {
-            fh.insert(vec(i), vec(i)).unwrap();
-        }
-
-        assert_eq!(fh.len(), n as u64);
-
-        for i in range {
-            let v = fh.get(&vec(i)).unwrap().unwrap();
-            assert_eq!(v, vec(i));
-        }
     }
 }

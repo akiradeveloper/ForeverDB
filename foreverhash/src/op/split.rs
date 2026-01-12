@@ -1,7 +1,7 @@
 use super::*;
 
 pub struct Split<'a> {
-    pub db: &'a mut LinHash,
+    pub db: &'a mut ForeverHash,
 }
 
 impl Split<'_> {

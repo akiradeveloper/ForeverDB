@@ -7,12 +7,12 @@ pub struct IndexEntry {
 }
 
 pub struct DBIndex {
-    db: linhash::LinHash,
+    db: foreverhash::ForeverHash,
 }
 
 impl DBIndex {
     pub fn open(main: &Path, overflow: &Path) -> Result<Self> {
-        let db = linhash::LinHash::new(main, overflow)?;
+        let db = foreverhash::ForeverHash::new(main, overflow)?;
 
         Ok(Self { db })
     }

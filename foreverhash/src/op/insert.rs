@@ -1,7 +1,7 @@
 use super::*;
 
 pub struct Insert<'a> {
-    pub db: &'a mut LinHash,
+    pub db: &'a mut ForeverHash,
 }
 
 impl Insert<'_> {

@@ -3,6 +3,7 @@ resolver = "2"
 members = [
   "foreverdb",
   "benchmark",
+  "foreverhash",
 ]
 
 [workspace.dependencies]

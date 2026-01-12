@@ -1,5 +1,5 @@
 [package]
-name = "foreverdb"
+name = "foreverhash"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,8 +8,5 @@ crc32fast.workspace = true
 rkyv.workspace = true
 thiserror.workspace = true
 
-foreverhash = { path = "../foreverhash" }
-
 [dev-dependencies]
 tempfile.workspace = true
-
