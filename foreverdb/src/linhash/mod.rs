@@ -1,5 +1,7 @@
+use rkyv::util::AlignedVec;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::fs::File;
+use std::ops::Range;
 use std::os::unix::fs::FileExt;
 use std::path::Path;
 
@@ -10,6 +12,9 @@ use error::Result;
 mod device;
 use device::Device;
 mod op;
+
+mod page_ref;
+use page_ref::PageRef;
 
 enum PageId {
     Main(u64),

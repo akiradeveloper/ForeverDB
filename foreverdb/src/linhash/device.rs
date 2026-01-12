@@ -39,8 +39,51 @@ impl Device {
         }
     }
 
+    pub fn read_page_ref(&self, id: u64) -> Result<Option<PageRef>> {
+        let mut buf = AlignedVec::with_capacity(4096);
+        buf.resize(4096, 0);
+
+        self.f.read_at(&mut buf, id * 4096)?;
+
+        let stored_crc = u32::from_le_bytes(buf[0..4].try_into().unwrap());
+        let data_len = u32::from_le_bytes(buf[4..8].try_into().unwrap()) as usize;
+        let data_range = 8..(8 + data_len);
+        let calc_crc = crc32fast::hash(&buf[data_range.clone()]);
+        assert_eq!(stored_crc, calc_crc);
+
+        let page_ref = PageRef { buf, data_range };
+
+        Ok(Some(page_ref))
+    }
+
     pub fn sync(&self) -> Result<()> {
         self.f.sync_all()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_page_ref() {
+        let f = tempfile::NamedTempFile::new().unwrap();
+        let device = Device {
+            f: f.reopen().unwrap(),
+        };
+
+        let mut page = Page {
+            kv_pairs: HashMap::new(),
+            overflow_id: None,
+        };
+        page.kv_pairs.insert(vec![1; 32], vec![1; 16]);
+        page.kv_pairs.insert(vec![2; 32], vec![2; 16]);
+
+        device.write_page(3, page).unwrap();
+
+        let page_ref = device.read_page_ref(3).unwrap().unwrap();
+        assert_eq!(page_ref.get_value(&vec![1; 32]), Some(&vec![1; 16][..]));
+        assert_eq!(page_ref.get_value(&vec![2; 32]), Some(&vec![2; 16][..]));
     }
 }
