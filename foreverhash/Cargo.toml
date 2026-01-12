@@ -1,15 +1,13 @@
 [package]
-name = "foreverdb"
+name = "foreverhash"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 crc32fast.workspace = true
-gdbm = "0.2"
-libc = "0.2"
 rkyv.workspace = true
+sha2 = "0.10"
 thiserror.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
-

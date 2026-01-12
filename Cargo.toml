@@ -2,5 +2,14 @@
 resolver = "2"
 members = [
   "foreverdb",
+  "foreverhash",
   "benchmark",
 ]
+
+[workspace.dependencies]
+crc32fast = "1.5"
+gdbm = "0.2"
+libc = "0.2"
+rkyv = "0.8"
+tempfile = "3.24.0"
+thiserror = "2"
