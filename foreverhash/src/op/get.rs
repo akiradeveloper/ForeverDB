@@ -1,10 +1,10 @@
 use super::*;
 
-pub struct Query<'a> {
+pub struct Get<'a> {
     pub db: &'a ForeverHash,
 }
 
-impl Query<'_> {
+impl Get<'_> {
     pub fn exec(self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         let b = self.db.calc_main_page_id(key);
         let mut page = self.db.main_pages.read_page(b)?.unwrap();

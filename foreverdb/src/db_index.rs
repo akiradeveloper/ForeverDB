@@ -7,31 +7,28 @@ pub struct IndexEntry {
 }
 
 pub struct DBIndex {
-    db: gdbm::Gdbm,
+    db: foreverhash::ForeverHash,
 }
 
 impl DBIndex {
-    pub fn open(path: &Path) -> Result<Self> {
-        let db = gdbm::Gdbm::new(path, 0, gdbm::Open::WRCREAT, libc::S_IRUSR | libc::S_IWUSR)
-            .map_err(Error::Gdbm)?;
+    pub fn open(main: &Path, overflow: &Path) -> Result<Self> {
+        let db = foreverhash::ForeverHash::new(main, overflow)?;
 
         Ok(Self { db })
     }
 
-    pub(super) fn insert(&mut self, k: &[u8], e: IndexEntry) -> Result<()> {
+    pub(super) fn insert(&mut self, k: Vec<u8>, e: IndexEntry) -> Result<()> {
         let v = rkyv::to_bytes::<rkyv::rancor::Error>(&e).unwrap();
-        self.db.store(k, &v, false).map_err(Error::Gdbm)?;
+        self.db.insert(k, v.into_vec())?;
         Ok(())
     }
 
     pub(super) fn get(&self, k: &[u8]) -> Result<Option<IndexEntry>> {
-        let data = self.db.fetch_data(k).map_err(Error::Gdbm)?;
+        let Some(data) = self.db.get(k)? else {
+            return Ok(None);
+        };
         let v = rkyv::from_bytes::<IndexEntry, rkyv::rancor::Error>(&data).unwrap();
         Ok(Some(v))
-    }
-
-    pub(super) fn sync(&mut self) {
-        self.db.sync();
     }
 }
 
@@ -41,15 +38,16 @@ mod tests {
 
     #[test]
     fn test_insert_and_get() {
-        let f = tempfile::NamedTempFile::new().unwrap();
-        let mut db = DBIndex::open(f.path()).unwrap();
+        let f1 = tempfile::NamedTempFile::new().unwrap();
+        let f2 = tempfile::NamedTempFile::new().unwrap();
+        let mut db = DBIndex::open(f1.path(), f2.path()).unwrap();
 
         let key = vec![1; 32];
         let val = IndexEntry {
             data_offset: 42,
             data_len: 100,
         };
-        db.insert(&key, val).unwrap();
+        db.insert(key.clone(), val).unwrap();
 
         let e = db.get(&key).unwrap();
         assert_eq!(e, Some(val));

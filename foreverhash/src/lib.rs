@@ -4,7 +4,8 @@ use std::os::unix::fs::FileExt;
 use std::path::Path;
 
 mod error;
-use error::{Error, Result};
+pub use error::Error;
+use error::Result;
 
 mod device;
 use device::Device;
@@ -28,7 +29,8 @@ fn encode_page(page: &Page) -> Vec<u8> {
 }
 
 fn decode_page(buf: &[u8]) -> Result<Page> {
-    rkyv::from_bytes::<Page, rkyv::rancor::Error>(buf).map_err(Error::from)
+    let page = rkyv::from_bytes::<Page, rkyv::rancor::Error>(buf)?;
+    Ok(page)
 }
 
 fn calc_max_kv_per_page(ksize: usize, vsize: usize) -> u8 {
@@ -69,8 +71,7 @@ impl ForeverHash {
             .read(true)
             .write(true)
             .create(true)
-            .open(main_page_file)
-            .map_err(Error::from)?;
+            .open(main_page_file)?;
 
         let main_pages = Device { f: main_page_file };
 
@@ -99,8 +100,7 @@ impl ForeverHash {
             .read(true)
             .write(true)
             .create(true)
-            .open(overflow_page_file)
-            .map_err(Error::from)?;
+            .open(overflow_page_file)?;
 
         let overflow_pages = Device {
             f: overflow_page_file,
@@ -149,8 +149,8 @@ impl ForeverHash {
         self.n_items
     }
 
-    pub fn query(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
-        op::Query { db: self }.exec(key)
+    pub fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+        op::Get { db: self }.exec(key)
     }
 
     pub fn insert(&mut self, key: Vec<u8>, value: Vec<u8>) -> Result<()> {

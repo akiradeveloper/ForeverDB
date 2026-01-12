@@ -3,8 +3,8 @@ use super::*;
 mod split;
 pub use split::Split;
 
-mod query;
-pub use query::Query;
+mod get;
+pub use get::Get;
 
 mod insert;
 pub use insert::Insert;

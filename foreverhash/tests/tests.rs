@@ -20,7 +20,7 @@ fn test_insert_and_query() {
     assert_eq!(fh.len(), n as u64);
 
     for i in range {
-        let v = fh.query(&vec(i)).unwrap().unwrap();
+        let v = fh.get(&vec(i)).unwrap().unwrap();
         assert_eq!(v, vec(i));
     }
 }

@@ -7,7 +7,7 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] std::io::Error),
     #[error(transparent)]
-    Gdbm(#[from] gdbm::GdbmError),
+    ForeverHash(#[from] foreverhash::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

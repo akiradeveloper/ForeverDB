@@ -21,21 +21,23 @@ fn main() {
 
     let f1 = tempfile::NamedTempFile::new().unwrap();
     let f2 = tempfile::NamedTempFile::new().unwrap();
-    let (data_log_path, db_index_path) = if args.mem {
-        (f1.path(), f2.path())
+    let f3 = tempfile::NamedTempFile::new().unwrap();
+    let (p1, p2, p3) = if args.mem {
+        (f1.path(), f2.path(), f3.path())
     } else {
-        let p1 = std::path::Path::new("data.db");
-        let p2 = std::path::Path::new("index.db");
+        let p1 = std::path::Path::new("1.db");
+        let p2 = std::path::Path::new("2.db");
+        let p3 = std::path::Path::new("3.db");
 
         std::fs::remove_file(p1).ok();
         std::fs::remove_file(p2).ok();
+        std::fs::remove_file(p3).ok();
 
-        (p1, p2)
+        (p1, p2, p3)
     };
 
-    let data_log = DataLog::open(data_log_path).unwrap();
-    let db_index = DBIndex::open(db_index_path).unwrap();
-
+    let data_log = DataLog::open(p1).unwrap();
+    let db_index = DBIndex::open(p2, p3).unwrap();
     let mut db = ForeverDB::new(data_log, db_index);
 
     let mut keys = HashSet::new();
@@ -43,7 +45,7 @@ fn main() {
     for _ in 0..args.warmup {
         let key = random(64); // 256 bits key
         let data = random(args.datasize as usize);
-        db.insert(&key, &data).unwrap();
+        db.insert(key.clone(), data).unwrap();
         keys.insert(key);
     }
 

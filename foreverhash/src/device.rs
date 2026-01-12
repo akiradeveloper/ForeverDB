@@ -20,14 +20,14 @@ impl Device {
             out
         };
 
-        self.f.write_at(&buf, id * 4096).map_err(Error::from)?;
+        self.f.write_at(&buf, id * 4096)?;
 
         Ok(())
     }
 
     pub fn read_page(&self, id: u64) -> Result<Option<Page>> {
         let mut buf = vec![0u8; 4096];
-        self.f.read_at(&mut buf, id * 4096).map_err(Error::from)?;
+        self.f.read_at(&mut buf, id * 4096)?;
         let stored_crc = u32::from_le_bytes(buf[0..4].try_into().unwrap());
         let data_len = u32::from_le_bytes(buf[4..8].try_into().unwrap()) as usize;
         let data = &buf[8..(8 + data_len)];
@@ -40,7 +40,7 @@ impl Device {
     }
 
     pub fn sync(&self) -> Result<()> {
-        self.f.sync_all().map_err(Error::from)?;
+        self.f.sync_all()?;
         Ok(())
     }
 }

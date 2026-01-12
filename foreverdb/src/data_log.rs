@@ -17,11 +17,10 @@ impl DataLog {
             .write(true)
             .read(true)
             .create(true)
-            .open(path)
-            .map_err(Error::IO)?;
+            .open(path)?;
 
         // Get the current tail position.
-        let meta = f.metadata().map_err(Error::IO)?;
+        let meta = f.metadata()?;
         let cursor = meta.len();
 
         Ok(Self { f, cursor })
@@ -42,7 +41,7 @@ impl DataLog {
         };
 
         let offset = self.cursor;
-        self.f.write_at(&buf, offset).map_err(Error::IO)?;
+        self.f.write_at(&buf, offset)?;
         self.cursor += HEADER_LEN as u64 + data_len as u64;
 
         Ok((offset, HEADER_LEN + data_len))
@@ -51,7 +50,7 @@ impl DataLog {
     pub(super) fn read(&self, k: (u64, u32)) -> Result<Vec<u8>> {
         let (offset, len) = k;
         let mut buf = vec![0u8; len as usize];
-        self.f.read_at(&mut buf, offset).map_err(Error::IO)?;
+        self.f.read_at(&mut buf, offset)?;
 
         let magic = u32::from_le_bytes(buf[0..4].try_into().unwrap());
         if magic != MAGIC {
@@ -67,11 +66,6 @@ impl DataLog {
         buf.drain(0..8); // Remove header
 
         Ok(buf)
-    }
-
-    pub(super) fn sync(&mut self) -> Result<()> {
-        self.f.flush().map_err(Error::IO)?;
-        Ok(())
     }
 }
 

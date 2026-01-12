@@ -5,10 +5,10 @@ edition = "2024"
 
 [dependencies]
 crc32fast.workspace = true
-gdbm = "0.2"
-libc = "0.2"
 rkyv.workspace = true
 thiserror.workspace = true
+
+foreverhash = { path = "../foreverhash" }
 
 [dev-dependencies]
 tempfile.workspace = true
