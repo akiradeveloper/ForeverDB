@@ -112,9 +112,15 @@ impl ForeverHash {
     }
 
     // The key must be at least 64 bits.
+    #[cfg(not(feature = "versatile"))]
     fn hash(&self, key: &[u8]) -> u64 {
         let a: [u8; 8] = key[0..8].try_into().ok().unwrap();
         u64::from_le_bytes(a)
+    }
+
+    #[cfg(feature = "versatile")]
+    fn hash(&self, key: &[u8]) -> u64 {
+        xxhash_rust::xxh3::xxh3_64(key)
     }
 
     fn calc_main_page_id(&self, key: &[u8]) -> u64 {

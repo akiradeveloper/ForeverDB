@@ -8,8 +8,7 @@ crc32fast.workspace = true
 rkyv.workspace = true
 thiserror.workspace = true
 
-foreverhash = { path = "../foreverhash" }
+foreverhash = { path = "../foreverhash", default-features = false }
 
 [dev-dependencies]
 tempfile.workspace = true
-
