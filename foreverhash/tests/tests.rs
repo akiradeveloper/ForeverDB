@@ -35,11 +35,11 @@ fn test_update() {
     let range = 0..n;
 
     for i in range.clone() {
-        fh.insert(vec(i), vec(i)).unwrap();
+        assert_eq!(fh.insert(vec(i), vec(i)).unwrap(), None);
     }
 
     for i in range.clone() {
-        fh.insert(vec(i), vec(i + 1)).unwrap();
+        assert_eq!(fh.insert(vec(i), vec(i + 1)).unwrap(), Some(vec(i)));
     }
 
     assert_eq!(fh.len(), n as u64);

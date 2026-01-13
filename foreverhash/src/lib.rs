@@ -31,9 +31,8 @@ impl Page {
     }
 
     /// Return true if an existing key was replaced.
-    fn insert(&mut self, key: Vec<u8>, value: Vec<u8>) -> bool {
-        let old = self.kv_pairs.insert(key, value);
-        old.is_some()
+    fn insert(&mut self, key: Vec<u8>, value: Vec<u8>) -> Option<Vec<u8>> {
+        self.kv_pairs.insert(key, value)
     }
 
     fn contains(&self, key: &[u8]) -> bool {
@@ -160,14 +159,14 @@ impl ForeverHash {
         op::Get { db: self }.exec(key)
     }
 
-    pub fn insert(&mut self, key: Vec<u8>, value: Vec<u8>) -> Result<()> {
-        op::Insert { db: self }.exec(key, value)?;
+    pub fn insert(&mut self, key: Vec<u8>, value: Vec<u8>) -> Result<Option<Vec<u8>>> {
+        let old = op::Insert { db: self }.exec(key, value)?;
 
         if self.load_factor() > 0.8 {
             op::Split { db: self }.exec().ok();
         }
 
-        Ok(())
+        Ok(old)
     }
 
     pub fn delete(&mut self, key: &[u8]) -> Result<Option<Vec<u8>>> {
