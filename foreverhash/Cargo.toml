@@ -13,5 +13,5 @@ xxhash-rust = { version = "0.8.15", features = ["xxh3"], optional = true }
 tempfile.workspace = true
 
 [features]
-default = ["hash"]
-hash = ["xxhash-rust"]
+default = []
+hash = ["dep:xxhash-rust"]
