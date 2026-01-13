@@ -5,21 +5,21 @@ struct IO {
 }
 
 impl IO {
-    pub fn new(f: File) -> Self {
+    fn new(f: File) -> Self {
         Self { f }
     }
 
-    pub fn read(&self, buf: &mut [u8], offset: u64) -> Result<()> {
+    fn read(&self, buf: &mut [u8], offset: u64) -> Result<()> {
         self.f.read_at(buf, offset)?;
         Ok(())
     }
 
-    pub fn write(&self, buf: &[u8], offset: u64) -> Result<()> {
+    fn write(&self, buf: &[u8], offset: u64) -> Result<()> {
         self.f.write_at(buf, offset)?;
         Ok(())
     }
 
-    pub fn flush(&self) -> Result<()> {
+    fn flush(&self) -> Result<()> {
         self.f.sync_all()?;
         Ok(())
     }
@@ -34,23 +34,32 @@ impl Device {
         Self { io: IO::new(f) }
     }
 
-    pub fn write_page(&self, id: u64, page: Page) -> Result<()> {
+    fn into_data(page: Page) -> Vec<u8> {
         let data = encode_page(&page);
         assert!(data.len() <= 4088);
 
-        let buf = {
-            let crc = crc32fast::hash(&data);
-            let data_len = data.len() as u32;
+        let crc = crc32fast::hash(&data);
+        let data_len = data.len() as u32;
 
-            let mut out = Vec::with_capacity(8 + data.len());
-            out.extend_from_slice(&crc.to_le_bytes());
-            out.extend_from_slice(&data_len.to_le_bytes());
-            out.extend_from_slice(&data);
-            out
-        };
+        let mut out = Vec::with_capacity(8 + data.len());
+        out.extend_from_slice(&crc.to_le_bytes());
+        out.extend_from_slice(&data_len.to_le_bytes());
+        out.extend_from_slice(&data);
 
+        out
+    }
+
+    pub fn write_page(&self, id: u64, page: Page) -> Result<()> {
+        let buf = Self::into_data(page);
         self.io.write(&buf, id * 4096)?;
+        Ok(())
+    }
 
+    // We need to ensure writing to main pages is atomic but for now, it is not possible.
+    // There is a risk of losing consistency if writing to main pages ended in torn write.
+    pub fn write_page_atomic(&self, id: u64, page: Page) -> Result<()> {
+        let buf = Self::into_data(page);
+        self.io.write(&buf, id * 4096)?;
         Ok(())
     }
 
@@ -87,7 +96,7 @@ impl Device {
         Ok(Some(page_ref))
     }
 
-    pub fn sync(&self) -> Result<()> {
+    pub fn flush(&self) -> Result<()> {
         self.io.flush()?;
         Ok(())
     }

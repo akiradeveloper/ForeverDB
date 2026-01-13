@@ -35,7 +35,7 @@ impl Insert<'_> {
             // If there is space in the tail-page, insert directly.
             tail_page.1.push(key, value);
             match tail_page.0 {
-                PageId::Main(b) => self.db.main_pages.write_page(b, tail_page.1)?,
+                PageId::Main(b) => self.db.main_pages.write_page_atomic(b, tail_page.1)?,
                 PageId::Overflow(id) => self.db.overflow_pages.write_page(id, tail_page.1)?,
             }
         } else {
@@ -50,13 +50,13 @@ impl Insert<'_> {
 
             // Since sync is only happened when we allocate a new overflow page and it is rare,
             // the performance impact is small.
-            self.db.overflow_pages.sync()?;
+            self.db.overflow_pages.flush()?;
 
             // After writing the new overflow page, update the old tail page.
             tail_page.1.overflow_id = Some(new_overflow_id);
             match tail_page.0 {
                 PageId::Main(b) => {
-                    self.db.main_pages.write_page(b, tail_page.1)?;
+                    self.db.main_pages.write_page_atomic(b, tail_page.1)?;
                 }
                 PageId::Overflow(id) => {
                     self.db.overflow_pages.write_page(id, tail_page.1)?;
