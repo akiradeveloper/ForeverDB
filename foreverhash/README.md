@@ -1,6 +1,6 @@
 # ForeverHash
 
-Linear Hashing implementation which doesn't support deletion and update.
+Linear Hashing implementation which doesn't support deletion.
 
 ## Features
 

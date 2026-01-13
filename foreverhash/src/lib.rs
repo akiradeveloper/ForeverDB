@@ -30,8 +30,10 @@ impl Page {
         }
     }
 
-    fn push(&mut self, key: Vec<u8>, value: Vec<u8>) {
-        self.kv_pairs.insert(key, value);
+    /// Return true if an existing key was replaced.
+    fn insert(&mut self, key: Vec<u8>, value: Vec<u8>) -> bool {
+        let old = self.kv_pairs.insert(key, value);
+        old.is_some()
     }
 
     fn contains(&self, key: &[u8]) -> bool {
@@ -46,7 +48,7 @@ fn calc_max_kv_per_page(ksize: usize, vsize: usize) -> u8 {
             overflow_id: Some(1),
         };
         for j in 0..i {
-            page.push(vec![j; ksize], vec![j; vsize]);
+            page.insert(vec![j; ksize], vec![j; vsize]);
         }
 
         let buf = encode_page(&page);

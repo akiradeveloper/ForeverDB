@@ -26,6 +26,31 @@ fn test_insert_and_get() {
 }
 
 #[test]
+fn test_update() {
+    let main = tempfile::NamedTempFile::new().unwrap();
+    let overflow = tempfile::NamedTempFile::new().unwrap();
+    let mut fh = ForeverHash::open(main.path(), overflow.path()).unwrap();
+
+    let n = 10000;
+    let range = 0..n;
+
+    for i in range.clone() {
+        fh.insert(vec(i), vec(i)).unwrap();
+    }
+
+    for i in range.clone() {
+        fh.insert(vec(i), vec(i + 1)).unwrap();
+    }
+
+    assert_eq!(fh.len(), n as u64);
+
+    for i in range {
+        let v = fh.get(&vec(i)).unwrap().unwrap();
+        assert_eq!(v, vec(i + 1));
+    }
+}
+
+#[test]
 fn test_restore() {
     let main = tempfile::NamedTempFile::new().unwrap();
     let overflow = tempfile::NamedTempFile::new().unwrap();

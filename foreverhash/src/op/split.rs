@@ -81,7 +81,7 @@ impl Split<'_> {
             let tail = page_chains.get_mut(&b).unwrap().back_mut().unwrap();
 
             if tail.1.kv_pairs.len() < self.db.max_kv_per_page.unwrap() as usize {
-                tail.1.push(k, v);
+                tail.1.insert(k, v);
                 continue;
             } else {
                 let new_overflow_id = self.db.next_overflow_id;
@@ -89,7 +89,7 @@ impl Split<'_> {
                 tail.1.overflow_id = Some(new_overflow_id);
 
                 let mut new_page = Page::new();
-                new_page.push(k, v);
+                new_page.insert(k, v);
 
                 page_chains
                     .get_mut(&b)

@@ -13,12 +13,26 @@ impl Insert<'_> {
 
         let b = self.db.calc_main_page_id(&key);
 
-        let mut tail_page = (PageId::Main(b), self.db.main_pages.read_page(b)?.unwrap());
+        let mut cur_page = (PageId::Main(b), self.db.main_pages.read_page(b)?.unwrap());
 
-        // Get the tail-page.
         loop {
-            if let Some(overflow_id) = tail_page.1.overflow_id {
-                tail_page = (
+            if cur_page.1.contains(&key)
+                || cur_page.1.kv_pairs.len() < self.db.max_kv_per_page.unwrap() as usize
+            {
+                let replaced = cur_page.1.insert(key, value);
+                match cur_page.0 {
+                    PageId::Main(b) => self.db.main_pages.write_page_atomic(b, cur_page.1)?,
+                    PageId::Overflow(id) => self.db.overflow_pages.write_page(id, cur_page.1)?,
+                }
+
+                if !replaced {
+                    self.db.n_items += 1;
+                }
+                return Ok(());
+            }
+
+            if let Some(overflow_id) = cur_page.1.overflow_id {
+                cur_page = (
                     PageId::Overflow(overflow_id),
                     self.db.overflow_pages.read_page(overflow_id)?.unwrap(),
                 );
@@ -26,41 +40,28 @@ impl Insert<'_> {
                 break;
             }
         }
+        let mut tail_page = cur_page;
 
-        if tail_page.1.contains(&key) {
-            return Ok(())
-        }
+        // If not, allocate a new overflow page.
+        let new_overflow_id = self.db.next_overflow_id;
+        self.db.next_overflow_id += 1;
+        let mut new_page = Page::new();
+        new_page.insert(key, value);
+        self.db
+            .overflow_pages
+            .write_page(new_overflow_id, new_page)?;
+        // Since sync is only happened when we allocate a new overflow page and it is rare,
+        // the performance impact is small.
+        self.db.overflow_pages.flush()?;
 
-        if tail_page.1.kv_pairs.len() < self.db.max_kv_per_page.unwrap() as usize {
-            // If there is space in the tail-page, insert directly.
-            tail_page.1.push(key, value);
-            match tail_page.0 {
-                PageId::Main(b) => self.db.main_pages.write_page_atomic(b, tail_page.1)?,
-                PageId::Overflow(id) => self.db.overflow_pages.write_page(id, tail_page.1)?,
+        // After writing the new overflow page, update the old tail page.
+        tail_page.1.overflow_id = Some(new_overflow_id);
+        match tail_page.0 {
+            PageId::Main(b) => {
+                self.db.main_pages.write_page_atomic(b, tail_page.1)?;
             }
-        } else {
-            // If not, allocate a new overflow page.
-            let new_overflow_id = self.db.next_overflow_id;
-            self.db.next_overflow_id += 1;
-            let mut new_page = Page::new();
-            new_page.push(key, value);
-            self.db
-                .overflow_pages
-                .write_page(new_overflow_id, new_page)?;
-
-            // Since sync is only happened when we allocate a new overflow page and it is rare,
-            // the performance impact is small.
-            self.db.overflow_pages.flush()?;
-
-            // After writing the new overflow page, update the old tail page.
-            tail_page.1.overflow_id = Some(new_overflow_id);
-            match tail_page.0 {
-                PageId::Main(b) => {
-                    self.db.main_pages.write_page_atomic(b, tail_page.1)?;
-                }
-                PageId::Overflow(id) => {
-                    self.db.overflow_pages.write_page(id, tail_page.1)?;
-                }
+            PageId::Overflow(id) => {
+                self.db.overflow_pages.write_page(id, tail_page.1)?;
             }
         }
 
