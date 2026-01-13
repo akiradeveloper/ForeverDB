@@ -51,6 +51,32 @@ fn test_update() {
 }
 
 #[test]
+fn test_delete() {
+    let main = tempfile::NamedTempFile::new().unwrap();
+    let overflow = tempfile::NamedTempFile::new().unwrap();
+    let mut fh = ForeverHash::open(main.path(), overflow.path()).unwrap();
+
+    let n = 10000;
+    let range = 0..n;
+
+    for i in range.clone() {
+        fh.insert(vec(i), vec(i)).unwrap();
+    }
+
+    for i in range.clone() {
+        let removed = fh.delete(&vec(i)).unwrap();
+        assert_eq!(removed, Some(vec(i)));
+    }
+
+    assert_eq!(fh.len(), 0);
+
+    for i in range {
+        let v = fh.get(&vec(i)).unwrap();
+        assert!(v.is_none());
+    }
+}
+
+#[test]
 fn test_restore() {
     let main = tempfile::NamedTempFile::new().unwrap();
     let overflow = tempfile::NamedTempFile::new().unwrap();

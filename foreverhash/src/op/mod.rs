@@ -14,3 +14,6 @@ pub use restore::Restore;
 
 mod init;
 pub use init::Init;
+
+mod delete;
+pub use delete::Delete;

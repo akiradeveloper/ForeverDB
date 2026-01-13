@@ -169,4 +169,8 @@ impl ForeverHash {
 
         Ok(())
     }
+
+    pub fn delete(&mut self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+        op::Delete { db: self }.exec(key)
+    }
 }
