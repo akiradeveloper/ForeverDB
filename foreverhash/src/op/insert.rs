@@ -28,7 +28,7 @@ impl Insert<'_> {
         }
 
         if tail_page.1.contains(&key) {
-            return Err(Error::KeyAlreadyExists);
+            return Ok(())
         }
 
         if tail_page.1.kv_pairs.len() < self.db.max_kv_per_page.unwrap() as usize {

@@ -1,7 +1,5 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("Key already exists")]
-    KeyAlreadyExists,
     #[error(transparent)]
     Rkyv(#[from] rkyv::rancor::Error),
     #[error(transparent)]
